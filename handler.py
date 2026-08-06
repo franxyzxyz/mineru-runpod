@@ -97,4 +97,8 @@ def handler(job):
     }
 
 
-runpod.serverless.start({"handler": handler})
+# The main guard is load-bearing: mineru rasterises pages in a *spawn* process pool, and
+# a spawned child re-imports this file as __main__ — unguarded, every child boots a second
+# serverless worker and the container is torn down mid-job.
+if __name__ == "__main__":
+    runpod.serverless.start({"handler": handler})
