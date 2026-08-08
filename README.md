@@ -40,7 +40,20 @@ The image must be linux/amd64 and pullable by RunPod, so GitHub Actions builds i
    pull it without registry credentials.
 
 3. The endpoint is created from that image (GPU pools `ADA_24`/`AMPERE_24`/`AMPERE_48`,
-   min 0 / max 3, FlashBoot on). Its id goes in `RUNPOD_ENDPOINT_ID`.
+   min 0 / max 3, FlashBoot on). Live: **`m7frm4fstshkpm`** (`foxbook-mineru`), in
+   `RUNPOD_ENDPOINT_ID`. Point it at the commit tag, not `:latest`, after a rebuild —
+   workers cache `:latest` by digest and a stale one will happily serve the old code.
+
+Smoke test (~85 s cold, ~6 s warm):
+
+```bash
+curl -s -X POST https://api.runpod.ai/v2/$RUNPOD_ENDPOINT_ID/runsync \
+  -H "Authorization: Bearer $RUNPOD_API_KEY" -H "Content-Type: application/json" \
+  -d '{"input":{"pdf_url":"https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"}}'
+```
+
+`services/mineru/handler_test.py` runs the same parse path against a local mineru, which
+is the cheap way to catch breakage before a 5-minute build and a GPU cold start.
 
 Model weights are baked into the image, so a cold start is model *load* (~30-60 s), not
 download. Bumping `MINERU_VERSION` in the Dockerfile rebuilds and republishes.

@@ -7,6 +7,7 @@
 # pipes it straight through (see tools/mineru-run.ts).
 import base64
 import glob
+import importlib.metadata
 import json
 import os
 import tempfile
@@ -15,6 +16,10 @@ import urllib.request
 
 import runpod
 from mineru.cli.common import do_parse
+
+# Reported per job so the cached bundle in R2 knows which parser made it — an upgrade
+# moves block boundaries, and stale blocks would quietly pin a paper to an old parse.
+MINERU_VERSION = importlib.metadata.version("mineru")
 
 # ponytail: crops ride back inside the job result, so no R2 credentials live here and
 # the caller needs no second fetch. Ceiling = RunPod's ~10 MB result cap; a 5-10 page
@@ -93,6 +98,7 @@ def handler(job):
         "images": images,
         "pages": max((b.get("page_idx", 0) for b in blocks), default=-1) + 1,
         "dropped_images": dropped,
+        "mineru_version": MINERU_VERSION,
         "duration_ms": int((time.time() - t0) * 1000),
     }
 
